@@ -20,13 +20,13 @@
 #include <SPI.h>
 
 // Teensy 3.1 can only generate 30 MHz SPI when running at 120 MHz (overclock)
-// At all other speeds, SPI.beginTransaction() will use the fastest available clock
+// At all other speeds, ILI9241_KINETISK_ILI9341_SPI.beginTransaction() will use the fastest available clock
 #define SPICLOCK 30000000
 
 #define WIDTH  ILI9341_TFTWIDTH
 #define HEIGHT ILI9341_TFTHEIGHT
 
-// Constructor when using hardware SPI.  Faster, but must use SPI pins
+// Constructor when using hardware ILI9241_KINETISK_ILI9341_SPI.  Faster, but must use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
 ILI9341_t3::ILI9341_t3(uint8_t cs, uint8_t dc, uint8_t rst, uint8_t mosi, uint8_t sclk, uint8_t miso)
 {
@@ -48,28 +48,28 @@ ILI9341_t3::ILI9341_t3(uint8_t cs, uint8_t dc, uint8_t rst, uint8_t mosi, uint8_
 
 void ILI9341_t3::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	setAddr(x0, y0, x1, y1);
 	writecommand_last(ILI9341_RAMWR); // write to RAM
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 void ILI9341_t3::pushColor(uint16_t color)
 {
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	writedata16_last(color);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 void ILI9341_t3::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 	if((x < 0) ||(x >= _width) || (y < 0) || (y >= _height)) return;
 
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	setAddr(x, y, x, y);
 	writecommand_cont(ILI9341_RAMWR);
 	writedata16_last(color);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 void ILI9341_t3::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
@@ -77,14 +77,14 @@ void ILI9341_t3::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
 	// Rudimentary clipping
 	if((x >= _width) || (y >= _height)) return;
 	if((y+h-1) >= _height) h = _height-y;
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	setAddr(x, y, x, y+h-1);
 	writecommand_cont(ILI9341_RAMWR);
 	while (h-- > 1) {
 		writedata16_cont(color);
 	}
 	writedata16_last(color);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 void ILI9341_t3::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
@@ -92,14 +92,14 @@ void ILI9341_t3::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
 	// Rudimentary clipping
 	if((x >= _width) || (y >= _height)) return;
 	if((x+w-1) >= _width)  w = _width-x;
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	setAddr(x, y, x+w-1, y);
 	writecommand_cont(ILI9341_RAMWR);
 	while (w-- > 1) {
 		writedata16_cont(color);
 	}
 	writedata16_last(color);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 void ILI9341_t3::fillScreen(uint16_t color)
@@ -118,7 +118,7 @@ void ILI9341_t3::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t c
 	// TODO: this can result in a very long transaction time
 	// should break this into multiple transactions, even though
 	// it'll cost more overhead, so we don't stall other SPI libs
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	setAddr(x, y, x+w-1, y+h-1);
 	writecommand_cont(ILI9341_RAMWR);
 	for(y=h; y>0; y--) {
@@ -127,11 +127,11 @@ void ILI9341_t3::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t c
 		}
 		writedata16_last(color);
 		if (y > 1 && (y & 1)) {
-			SPI.endTransaction();
-			SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+			ILI9341_SPI.endTransaction();
+			ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 		}
 	}
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 
@@ -147,7 +147,7 @@ void ILI9341_t3::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t c
 void ILI9341_t3::setRotation(uint8_t m)
 {
 	rotation = m % 4; // can't be higher than 3
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	writecommand_cont(ILI9341_MADCTL);
 	switch (rotation) {
 	case 0:
@@ -171,24 +171,24 @@ void ILI9341_t3::setRotation(uint8_t m)
 		_height = ILI9341_TFTWIDTH;
 		break;
 	}
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 	cursor_x = 0;
 	cursor_y = 0;
 }
 
 void ILI9341_t3::setScroll(uint16_t offset)
 {
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	writecommand_cont(ILI9341_VSCRSADD);
 	writedata16_last(offset);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 void ILI9341_t3::invertDisplay(boolean i)
 {
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	writecommand_last(i ? ILI9341_INVON : ILI9341_INVOFF);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 
@@ -207,76 +207,143 @@ uint8_t ILI9341_t3::readdata(void)
        // Try to work directly with SPI registers...
        // First wait until output queue is empty
         uint16_t wTimeout = 0xffff;
-        while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
+        while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
         
-//       	KINETISK_SPI0.MCR |= SPI_MCR_CLR_RXF; // discard any received data
-//		KINETISK_SPI0.SR = SPI_SR_TCF;
+//       	ILI9341_KINETISK_SPI.MCR |= SPI_MCR_CLR_RXF; // discard any received data
+//		ILI9341_KINETISK_SPI.SR = SPI_SR_TCF;
         
         // Transfer a 0 out... 
         writedata8_cont(0);   
         
         // Now wait until completed. 
         wTimeout = 0xffff;
-        while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
-        r = KINETISK_SPI0.POPR;  // get the received byte... should check for it first...
+        while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
+        r = ILI9341_KINETISK_SPI.POPR;  // get the received byte... should check for it first...
     return r;
 }
  */
 
-
+#if ILI9341_SPI_QUEUE_SIZE >= 4	
 uint8_t ILI9341_t3::readcommand8(uint8_t c, uint8_t index)
 {
     uint16_t wTimeout = 0xffff;
     uint8_t r=0;
 
-    SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-    while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
+    ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+    while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
 
     // Make sure the last frame has been sent...
-    KINETISK_SPI0.SR = SPI_SR_TCF;   // dlear it out;
+    ILI9341_KINETISK_SPI.SR = SPI_SR_TCF;   // dlear it out;
     wTimeout = 0xffff;
-    while (!((KINETISK_SPI0.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
+    while (!((ILI9341_KINETISK_SPI.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
 
     // clear out any current received bytes
     wTimeout = 0x10;    // should not go more than 4...
-    while ((((KINETISK_SPI0.SR) >> 4) & 0xf) && (--wTimeout))  {
-        r = KINETISK_SPI0.POPR;
+    while ((((ILI9341_KINETISK_SPI.SR) >> 4) & 0xf) && (--wTimeout))  {
+        r = ILI9341_KINETISK_SPI.POPR;
     }
 
     //writecommand(0xD9); // sekret command
-	KINETISK_SPI0.PUSHR = 0xD9 | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
-//	while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
+	ILI9341_KINETISK_SPI.PUSHR = 0xD9 | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
+//	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
 
     // writedata(0x10 + index);
-	KINETISK_SPI0.PUSHR = (0x10 + index) | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
-//	while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
-
+	ILI9341_KINETISK_SPI.PUSHR = (0x10 + index) | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
+//	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
     // writecommand(c);
-   	KINETISK_SPI0.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
-//	while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
+   	ILI9341_KINETISK_SPI.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
+//	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
 
     // readdata
-	KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
-//	while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
+	ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
+//	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
 
     // Now wait until completed.
     wTimeout = 0xffff;
-    while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
+    while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
 
     // Make sure the last frame has been sent...
-    KINETISK_SPI0.SR = SPI_SR_TCF;   // dlear it out;
+    ILI9341_KINETISK_SPI.SR = SPI_SR_TCF;   // dlear it out;
     wTimeout = 0xffff;
-    while (!((KINETISK_SPI0.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
+    while (!((ILI9341_KINETISK_SPI.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
 
     wTimeout = 0x10;    // should not go more than 4...
     // lets get all of the values on the FIFO
-    while ((((KINETISK_SPI0.SR) >> 4) & 0xf) && (--wTimeout))  {
-        r = KINETISK_SPI0.POPR;
+    while ((((ILI9341_KINETISK_SPI.SR) >> 4) & 0xf) && (--wTimeout))  {
+        r = ILI9341_KINETISK_SPI.POPR;
     }
-    SPI.endTransaction();
+    ILI9341_SPI.endTransaction();
     return r;  // get the received byte... should check for it first...
 }
+#else
+// SPI1 and SPI2 have small queues(1) so need to be careful on how we push/pop
+uint8_t ILI9341_t3::readcommand8(uint8_t c, uint8_t index)
+{
+    uint16_t wTimeout = 0xffff;
+    uint8_t r=0;
 
+    ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+    while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
+
+    // Make sure the last frame has been sent...
+    ILI9341_KINETISK_SPI.SR = SPI_SR_TCF;   // dlear it out;
+    wTimeout = 0xffff;
+    while (!((ILI9341_KINETISK_SPI.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
+
+    // clear out any current received bytes
+    wTimeout = 0x10;    // should not go more than 4...
+    while ((((ILI9341_KINETISK_SPI.SR) >> 4) & 0xf) && (--wTimeout))  {
+        r = ILI9341_KINETISK_SPI.POPR;
+    }
+
+    //writecommand(0xD9); // sekret command
+	ILI9341_KINETISK_SPI.PUSHR = 0xD9 | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
+	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
+
+    // writedata(0x10 + index);
+	ILI9341_KINETISK_SPI.PUSHR = (0x10 + index) | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
+	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
+
+	// See if there are any return values to pop 
+    while (((ILI9341_KINETISK_SPI.SR) >> 4) & 0xf)  {
+        r = ILI9341_KINETISK_SPI.POPR;
+    }
+
+    // writecommand(c);
+   	ILI9341_KINETISK_SPI.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
+	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
+
+	// See if there are any return values to pop 
+    while (((ILI9341_KINETISK_SPI.SR) >> 4) & 0xf)  {
+        r = ILI9341_KINETISK_SPI.POPR;
+    }
+
+    // readdata
+	ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
+	while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ; // wait if FIFO full
+
+	// See if there are any return values to pop 
+    while (((ILI9341_KINETISK_SPI.SR) >> 4) & 0xf)  {
+        r = ILI9341_KINETISK_SPI.POPR;
+    }
+    // Now wait until completed.
+    wTimeout = 0xffff;
+    while (((ILI9341_KINETISK_SPI.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
+
+    // Make sure the last frame has been sent...
+    ILI9341_KINETISK_SPI.SR = SPI_SR_TCF;   // dlear it out;
+    wTimeout = 0xffff;
+    while (!((ILI9341_KINETISK_SPI.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
+
+    wTimeout = 0x10;    // should not go more than 4...
+    // lets get all of the values on the FIFO
+    while ((((ILI9341_KINETISK_SPI.SR) >> 4) & 0xf) && (--wTimeout))  {
+        r = ILI9341_KINETISK_SPI.POPR;
+    }
+    ILI9341_SPI.endTransaction();
+    return r;  // get the received byte... should check for it first...
+}
+#endif
 
 // Read Pixel at x,y and get back 16-bit packed color
 uint16_t ILI9341_t3::readPixel(int16_t x, int16_t y)
@@ -284,31 +351,31 @@ uint16_t ILI9341_t3::readPixel(int16_t x, int16_t y)
 	uint8_t dummy __attribute__((unused));
 	uint8_t r,g,b;
 
-	SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
 
 	setAddr(x, y, x, y);
 	writecommand_cont(ILI9341_RAMRD); // read from RAM
 	waitTransmitComplete();
 
 	// Push 4 bytes over SPI
-	KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
+	ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
 	waitFifoEmpty();    // wait for both queues to be empty.
 
-	KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
-	KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
-	KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_EOQ;
+	ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
+	ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
+	ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_EOQ;
 
 	// Wait for End of Queue
-	while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) ;
-	KINETISK_SPI0.SR = SPI_SR_EOQF;  // make sure it is clear
+	while ((ILI9341_KINETISK_SPI.SR & SPI_SR_EOQF) == 0) ;
+	ILI9341_KINETISK_SPI.SR = SPI_SR_EOQF;  // make sure it is clear
 
 	// Read Pixel Data
-	dummy = KINETISK_SPI0.POPR;	// Read a DUMMY byte of GRAM
-	r = KINETISK_SPI0.POPR;		// Read a RED byte of GRAM
-	g = KINETISK_SPI0.POPR;		// Read a GREEN byte of GRAM
-	b = KINETISK_SPI0.POPR;		// Read a BLUE byte of GRAM
+	dummy = ILI9341_KINETISK_SPI.POPR;	// Read a DUMMY byte of GRAM
+	r = ILI9341_KINETISK_SPI.POPR;		// Read a RED byte of GRAM
+	g = ILI9341_KINETISK_SPI.POPR;		// Read a GREEN byte of GRAM
+	b = ILI9341_KINETISK_SPI.POPR;		// Read a BLUE byte of GRAM
 
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 	return color565(r,g,b);
 }
 
@@ -319,48 +386,48 @@ void ILI9341_t3::readRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *
 	uint8_t r,g,b;
 	uint16_t c = w * h;
 
-	SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
 
 	setAddr(x, y, x+w-1, y+h-1);
 	writecommand_cont(ILI9341_RAMRD); // read from RAM
 	waitTransmitComplete();
-	KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT | SPI_PUSHR_EOQ;
-	while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) ;
-	KINETISK_SPI0.SR = SPI_SR_EOQF;  // make sure it is clear
-	while ((KINETISK_SPI0.SR & 0xf0)) {
-		dummy = KINETISK_SPI0.POPR;	// Read a DUMMY byte but only once
+	ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT | SPI_PUSHR_EOQ;
+	while ((ILI9341_KINETISK_SPI.SR & SPI_SR_EOQF) == 0) ;
+	ILI9341_KINETISK_SPI.SR = SPI_SR_EOQF;  // make sure it is clear
+	while ((ILI9341_KINETISK_SPI.SR & 0xf0)) {
+		dummy = ILI9341_KINETISK_SPI.POPR;	// Read a DUMMY byte but only once
 	}
 	c *= 3; // number of bytes we will transmit to the display
 	while (c--) {
         	if (c) {
-            		KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
+            		ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
         	} else {
-            		KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_EOQ;
+            		ILI9341_KINETISK_SPI.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_EOQ;
 		}
 
 		// If last byte wait until all have come in...
 		if (c == 0) {
-			while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) ;
-			KINETISK_SPI0.SR = SPI_SR_EOQF;  // make sure it is clear
+			while ((ILI9341_KINETISK_SPI.SR & SPI_SR_EOQF) == 0) ;
+			ILI9341_KINETISK_SPI.SR = SPI_SR_EOQF;  // make sure it is clear
 		}
 
-		if ((KINETISK_SPI0.SR & 0xf0) >= 0x30) { // do we have at least 3 bytes in queue if so extract...
-			r = KINETISK_SPI0.POPR;		// Read a RED byte of GRAM
-			g = KINETISK_SPI0.POPR;		// Read a GREEN byte of GRAM
-			b = KINETISK_SPI0.POPR;		// Read a BLUE byte of GRAM
+		if ((ILI9341_KINETISK_SPI.SR & 0xf0) >= 0x30) { // do we have at least 3 bytes in queue if so extract...
+			r = ILI9341_KINETISK_SPI.POPR;		// Read a RED byte of GRAM
+			g = ILI9341_KINETISK_SPI.POPR;		// Read a GREEN byte of GRAM
+			b = ILI9341_KINETISK_SPI.POPR;		// Read a BLUE byte of GRAM
 			*pcolors++ = color565(r,g,b);
 		}
 
 		// like waitFiroNotFull but does not pop our return queue
-		while ((KINETISK_SPI0.SR & (15 << 12)) > (3 << 12)) ;
+		while ((ILI9341_KINETISK_SPI.SR & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12)) ;
 	}
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 // Now lets see if we can writemultiple pixels
 void ILI9341_t3::writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *pcolors)
 {
-   	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+   	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	setAddr(x, y, x+w-1, y+h-1);
 	writecommand_cont(ILI9341_RAMWR);
 	for(y=h; y>0; y--) {
@@ -369,7 +436,7 @@ void ILI9341_t3::writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const uin
 		}
 		writedata16_last(*pcolors++);
 	}
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 
@@ -403,15 +470,18 @@ void ILI9341_t3::begin(void)
 {
     // verify SPI pins are valid;
     if ((_mosi == 11 || _mosi == 7) && (_miso == 12 || _miso == 8) && (_sclk == 13 || _sclk == 14)) {
-        SPI.setMOSI(_mosi);
-        SPI.setMISO(_miso);
-        SPI.setSCK(_sclk);
-	} else
-        return; // not valid pins...
-	SPI.begin();
-	if (SPI.pinIsChipSelect(_cs, _dc)) {
-		pcs_data = SPI.setCS(_cs);
-		pcs_command = pcs_data | SPI.setCS(_dc);
+        ILI9341_SPI.setMOSI(_mosi);
+        ILI9341_SPI.setMISO(_miso);
+        ILI9341_SPI.setSCK(_sclk);
+	} else {
+		// allow user to say use current ones...
+		if ((_mosi != 255) || (_miso != 255) || (_sclk != 255))
+        	return; // not valid pins...
+	}
+	ILI9341_SPI.begin();
+	if (ILI9341_SPI.pinIsChipSelect(_cs, _dc)) {
+		pcs_data = ILI9341_SPI.setCS(_cs);
+		pcs_command = pcs_data | ILI9341_SPI.setCS(_dc);
 	} else {
 		pcs_data = 0;
 		pcs_command = 0;
@@ -427,7 +497,7 @@ void ILI9341_t3::begin(void)
 		digitalWrite(_rst, HIGH);
 		delay(150);
 	}
-	/*
+/*
 	uint8_t x = readcommand8(ILI9341_RDMODE);
 	Serial.print("\nDisplay Power Mode: 0x"); Serial.println(x, HEX);
 	x = readcommand8(ILI9341_RDMADCTL);
@@ -438,8 +508,8 @@ void ILI9341_t3::begin(void)
 	Serial.print("\nImage Format: 0x"); Serial.println(x, HEX);
 	x = readcommand8(ILI9341_RDSELFDIAG);
 	Serial.print("\nSelf Diagnostic: 0x"); Serial.println(x, HEX);
-	*/
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+*/	
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	const uint8_t *addr = init_commands;
 	while (1) {
 		uint8_t count = *addr++;
@@ -450,12 +520,11 @@ void ILI9341_t3::begin(void)
 		}
 	}
 	writecommand_last(ILI9341_SLPOUT);    // Exit Sleep
-	SPI.endTransaction();
-
+	ILI9341_SPI.endTransaction();
 	delay(120); 		
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	writecommand_last(ILI9341_DISPON);    // Display on
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 
@@ -651,7 +720,7 @@ void ILI9341_t3::drawLine(int16_t x0, int16_t y0,
 		ystep = -1;
 	}
 
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	int16_t xbegin = x0;
 	if (steep) {
 		for (; x0<=x1; x0++) {
@@ -692,19 +761,19 @@ void ILI9341_t3::drawLine(int16_t x0, int16_t y0,
 		}
 	}
 	writecommand_last(ILI9341_NOP);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 // Draw a rectangle
 void ILI9341_t3::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	HLine(x, y, w, color);
 	HLine(x, y+h-1, w, color);
 	VLine(x, y, h, color);
 	VLine(x+w-1, y, h, color);
 	writecommand_last(ILI9341_NOP);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 }
 
 // Draw a rounded rectangle
@@ -956,7 +1025,7 @@ void ILI9341_t3::drawChar(int16_t x, int16_t y, unsigned char c,
 		}
 	} else {
 		// This solid background approach is about 5 time faster
-		SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+		ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 		setAddr(x, y, x + 6 * size - 1, y + 8 * size - 1);
 		writecommand_cont(ILI9341_RAMWR);
 		uint8_t xr, yr;
@@ -981,7 +1050,7 @@ void ILI9341_t3::drawChar(int16_t x, int16_t y, unsigned char c,
 			mask = mask << 1;
 		}
 		writecommand_last(ILI9341_NOP);
-		SPI.endTransaction();
+		ILI9341_SPI.endTransaction();
 	}
 }
 
@@ -1153,7 +1222,7 @@ void ILI9341_t3::drawFontBits(uint32_t bits, uint32_t numbits, uint32_t x, uint3
 #endif
 #if 1
 	if (bits == 0) return;
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	int w = 0;
 	do {
 		uint32_t x1 = x;
@@ -1198,7 +1267,7 @@ void ILI9341_t3::drawFontBits(uint32_t bits, uint32_t numbits, uint32_t x, uint3
 		y++;
 		repeat--;
 	} while (repeat);
-	SPI.endTransaction();
+	ILI9341_SPI.endTransaction();
 #endif	
 }
 
@@ -1244,15 +1313,15 @@ uint8_t ILI9341_t3::getRotation(void) {
 }
 
 void ILI9341_t3::sleep(bool enable) {
-	SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+	ILI9341_SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
 	if (enable) {
 		writecommand_cont(ILI9341_DISPOFF);		
 		writecommand_last(ILI9341_SLPIN);	
-		  SPI.endTransaction();
+		  ILI9341_SPI.endTransaction();
 	} else {
 		writecommand_cont(ILI9341_DISPON);
 		writecommand_last(ILI9341_SLPOUT);
-		SPI.endTransaction();
+		ILI9341_SPI.endTransaction();
 		delay(5);
 	}
 }

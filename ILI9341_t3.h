@@ -19,6 +19,22 @@
 #ifndef _ILI9341_t3H_
 #define _ILI9341_t3H_
 
+// Allow way to override using SPI
+#define ILI9341_USE_SPI1
+
+#ifdef ILI9341_USE_SPI1  
+#define ILI9341_SPI SPI1
+#define ILI9341_KINETISK_SPI KINETISK_SPI1  
+#define ILI9341_SPI_QUEUE_SIZE 1
+#endif
+
+#ifndef ILI9341_SPI
+#define ILI9341_SPI SPI
+#define ILI9341_KINETISK_SPI KINETISK_SPI0 
+#define ILI9341_SPI_QUEUE_SIZE 4 
+#endif  
+
+
 #ifdef __cplusplus
 #include "Arduino.h"
 #endif
@@ -216,61 +232,61 @@ class ILI9341_t3 : public Print
 		uint32_t sr;
 		uint32_t tmp __attribute__((unused));
 		do {
-			sr = KINETISK_SPI0.SR;
-			if (sr & 0xF0) tmp = KINETISK_SPI0.POPR;  // drain RX FIFO
-		} while ((sr & (15 << 12)) > (3 << 12));
+			sr = ILI9341_KINETISK_SPI.SR;
+			if (sr & 0xF0) tmp = ILI9341_KINETISK_SPI.POPR;  // drain RX FIFO
+		} while ((sr & (15 << 12)) > ((ILI9341_SPI_QUEUE_SIZE-1) << 12));
 	}
 	void waitFifoEmpty(void) {
 		uint32_t sr;
 		uint32_t tmp __attribute__((unused));
 		do {
-			sr = KINETISK_SPI0.SR;
-			if (sr & 0xF0) tmp = KINETISK_SPI0.POPR;  // drain RX FIFO
+			sr = ILI9341_KINETISK_SPI.SR;
+			if (sr & 0xF0) tmp = ILI9341_KINETISK_SPI.POPR;  // drain RX FIFO
 		} while ((sr & 0xF0F0) > 0);             // wait both RX & TX empty
 	}
 	void waitTransmitComplete(void) __attribute__((always_inline)) {
 		uint32_t tmp __attribute__((unused));
-		while (!(KINETISK_SPI0.SR & SPI_SR_TCF)) ; // wait until final output done
-		tmp = KINETISK_SPI0.POPR;                  // drain the final RX FIFO word
+		while (!(ILI9341_KINETISK_SPI.SR & SPI_SR_TCF)) ; // wait until final output done
+		tmp = ILI9341_KINETISK_SPI.POPR;                  // drain the final RX FIFO word
 	}
 	void waitTransmitComplete(uint32_t mcr) __attribute__((always_inline)) {
 		uint32_t tmp __attribute__((unused));
 		while (1) {
-			uint32_t sr = KINETISK_SPI0.SR;
+			uint32_t sr = ILI9341_KINETISK_SPI.SR;
 			if (sr & SPI_SR_EOQF) break;  // wait for last transmit
-			if (sr &  0xF0) tmp = KINETISK_SPI0.POPR;
+			if (sr &  0xF0) tmp = ILI9341_KINETISK_SPI.POPR;
 		}
-		KINETISK_SPI0.SR = SPI_SR_EOQF;
-		SPI0_MCR = mcr;
-		while (KINETISK_SPI0.SR & 0xF0) {
-			tmp = KINETISK_SPI0.POPR;
+		ILI9341_KINETISK_SPI.SR = SPI_SR_EOQF;
+		ILI9341_KINETISK_SPI.MCR = mcr;
+		while (ILI9341_KINETISK_SPI.SR & 0xF0) {
+			tmp = ILI9341_KINETISK_SPI.POPR;
 		}
 	}
 	void writecommand_cont(uint8_t c) __attribute__((always_inline)) {
-		KINETISK_SPI0.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
+		ILI9341_KINETISK_SPI.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
 		waitFifoNotFull();
 	}
 	void writedata8_cont(uint8_t c) __attribute__((always_inline)) {
-		KINETISK_SPI0.PUSHR = c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
+		ILI9341_KINETISK_SPI.PUSHR = c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
 		waitFifoNotFull();
 	}
 	void writedata16_cont(uint16_t d) __attribute__((always_inline)) {
-		KINETISK_SPI0.PUSHR = d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) | SPI_PUSHR_CONT;
+		ILI9341_KINETISK_SPI.PUSHR = d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) | SPI_PUSHR_CONT;
 		waitFifoNotFull();
 	}
 	void writecommand_last(uint8_t c) __attribute__((always_inline)) {
-		uint32_t mcr = SPI0_MCR;
-		KINETISK_SPI0.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_EOQ;
+		uint32_t mcr = ILI9341_KINETISK_SPI.MCR;
+		ILI9341_KINETISK_SPI.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_EOQ;
 		waitTransmitComplete(mcr);
 	}
 	void writedata8_last(uint8_t c) __attribute__((always_inline)) {
-		uint32_t mcr = SPI0_MCR;
-		KINETISK_SPI0.PUSHR = c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_EOQ;
+		uint32_t mcr = ILI9341_KINETISK_SPI.MCR;
+		ILI9341_KINETISK_SPI.PUSHR = c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_EOQ;
 		waitTransmitComplete(mcr);
 	}
 	void writedata16_last(uint16_t d) __attribute__((always_inline)) {
-		uint32_t mcr = SPI0_MCR;
-		KINETISK_SPI0.PUSHR = d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) | SPI_PUSHR_EOQ;
+		uint32_t mcr = ILI9341_KINETISK_SPI.MCR;
+		ILI9341_KINETISK_SPI.PUSHR = d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) | SPI_PUSHR_EOQ;
 		waitTransmitComplete(mcr);
 	}
 	void HLine(int16_t x, int16_t y, int16_t w, uint16_t color)
