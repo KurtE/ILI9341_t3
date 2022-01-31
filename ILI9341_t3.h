@@ -59,6 +59,10 @@
 #error "Sorry, ILI9341_t3 does not work with Teensy 2.0 or Teensy++ 2.0.  Use Adafruit_ILI9341."
 #endif
 
+// added features we can check to see if version supports
+#define ILI9341_SUPPORTS_CLIPPING
+
+// ILI9341 constants - sizes, operations
 #define ILI9341_TFTWIDTH  240
 #define ILI9341_TFTHEIGHT 320
 
@@ -258,6 +262,14 @@ class ILI9341_t3 : public Print
 	//					width must be at least 8 pixels
 	void writeRect1BPP(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, const uint16_t * palette );
 
+	// writeRectNBPP - 	write N(1, 2, 4, 8) bit per pixel paletted bitmap
+	//					bitmap data in array at pixels
+	//  Currently writeRect1BPP, writeRect2BPP, writeRect4BPP use this to do all
+	//  of the work.
+	//
+	void writeRectNBPP(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t bits_per_pixel, 
+					   const uint8_t *pixels, const uint16_t *palette);
+
 	// from Adafruit_GFX.h
 	void drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
 	void drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color);
@@ -295,6 +307,14 @@ class ILI9341_t3 : public Print
 	uint16_t measureTextWidth(const char* text, int chars = 0);
 	uint16_t measureTextHeight(const char* text, int chars = 0);
 	int16_t strPixelLen(char * str);
+	// setOrigin sets an offset in display pixels where drawing to (0,0) will
+	// appear
+	// for example: setOrigin(10,10); drawPixel(5,5); will cause a pixel to be
+	// drawn at hardware pixel (15,15)
+	void setOrigin(int16_t x = 0, int16_t y = 0);
+	void getOrigin(int16_t *x, int16_t *y);
+	void setClipRect(int16_t x1, int16_t y1, int16_t w, int16_t h);
+	void setClipRect();
 
  protected:
         unsigned long _clock = ILI9341_SPICLOCK;
@@ -309,7 +329,16 @@ class ILI9341_t3 : public Print
   	uint8_t _cs, _dc;
 	uint8_t pcs_data, pcs_command;
 	uint8_t _miso, _mosi, _sclk;
+	// Clipping and offset support
+	int16_t _clipx1 = 0, _clipy1 = 0;
+	int16_t _clipx2 = ILI9341_TFTWIDTH, _clipy2 = ILI9341_TFTHEIGHT;
+	int16_t _originx = 0, _originy = 0;
+	int16_t _displayclipx1, _displayclipy1, _displayclipx2, _displayclipy2;
+  	bool _invisible = false;
+  	bool _standard = true; // no bounding rectangle or origin set.
+
 	// add support to allow only one hardware CS (used for dc)
+
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__)  // Teensy 4.x
     uint32_t _cspinmask;
     volatile uint32_t *_csport;
@@ -339,6 +368,24 @@ class ILI9341_t3 : public Print
 			old_y0 = y0; old_y1 = y1;
 		}
 	}
+
+	inline void updateDisplayClip() {
+		_displayclipx1 = max(0, min(_clipx1 + _originx, width()));
+		_displayclipx2 = max(0, min(_clipx2 + _originx, width()));
+
+		_displayclipy1 = max(0, min(_clipy1 + _originy, height()));
+		_displayclipy2 = max(0, min(_clipy2 + _originy, height()));
+		_invisible =
+		    (_displayclipx1 == _displayclipx2 || _displayclipy1 == _displayclipy2);
+		_standard = (_displayclipx1 == 0) && (_displayclipx2 == _width) &&
+		            (_displayclipy1 == 0) && (_displayclipy2 == _height);
+		if (Serial) {
+		  // Serial.printf("UDC (%d %d)-(%d %d) %d %d\n", _displayclipx1,
+		  // _displayclipy1, _displayclipx2,
+		  //	_displayclipy2, _invisible, _standard);
+		}
+	}
+
 
 //----------------------------------------------------------------------
 // Processor Specific stuff
